@@ -125,6 +125,37 @@ Once running, PixelGrid exposes an interactive web server on port `8080`:
 
 ---
 
+## 🐳 Docker Operations & Cheat Sheet
+
+Run these commands directly on your Raspberry Pi terminal inside the `pixelgrid` directory:
+
+### 1. Rebuild & Start Container
+Whenever you update code or configuration:
+```bash
+docker-compose up -d --build
+```
+
+### 2. View Live Container Logs
+Stream real-time logs (generation output, Bluetooth handshakes, and retry attempts):
+```bash
+docker logs -f pixelgrid-service
+```
+*(Or view the last 50 lines:* `docker logs --tail 50 pixelgrid-service`*)*
+
+### 3. Scan Bluetooth Devices Inside the Running Container
+Verify what BLE devices the running Docker container sees over the air:
+```bash
+docker exec -it pixelgrid-service python src/scan_bluetooth.py --all
+```
+
+### 4. Trigger an Instant Refresh On-Demand
+Force a fresh pixel art generation and display update immediately:
+```bash
+curl http://localhost:8080/refresh
+```
+
+---
+
 ## 🛠️ Local Development & Testing
 
 1. **Install dependencies using `uv`:**
