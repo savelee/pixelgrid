@@ -106,6 +106,37 @@ docker-compose up -d --build
 
 ---
 
+## 🖥️ Running on macOS or Windows
+
+### Why Native Python is Recommended for Bluetooth on Mac/Windows
+> [!NOTE]
+> **Docker Desktop Limitation on macOS & Windows:** Docker Desktop on macOS and Windows runs Linux containers inside a virtual machine (LinuxKit/WSL2) that **does not support Bluetooth hardware pass-through**. Linux containers running on Docker Desktop for Mac or Windows cannot communicate with host Bluetooth LE adapters.
+
+#### Option A: Native Python with Bluetooth (Recommended for Mac/Windows)
+Run PixelGrid directly on your macOS or Windows host OS so `Bleak` can access Apple CoreBluetooth (macOS) or WinRT Bluetooth (Windows) natively:
+
+1. **Install Python dependencies:**
+   ```bash
+   make setup
+   source .venv/bin/activate
+   ```
+2. **Discover your speaker's address:**
+   ```bash
+   uv run python src/scan_bluetooth.py --all
+   ```
+   *(Note: On macOS, this returns an Apple CoreBluetooth UUID like `6B3A1398-627A-47C9-FFCD-1A81B7769567`).*
+3. **Start the server natively:**
+   ```bash
+   export GEMINI_API_KEY=AIzaSyYourApiKeyHere
+   export DIVOOM_MAC_ADDRESS=6B3A1398-627A-47C9-FFCD-1A81B7769567
+   uv run python src/server.py --port 8080 --interval 15
+   ```
+
+#### Option B: Docker Desktop (AI Generation & JSON Archiving Only)
+If you run `docker-compose up -d` on macOS or Windows without setting `DIVOOM_MAC_ADDRESS`, the container operates as an **AI Pixel Art Generator**. Every 15 minutes (or via `/refresh`), it generates a new 16x16 pixel art design and archives the JSON files to `./downloads/` without attempting hardware Bluetooth transmission.
+
+---
+
 ## 🌐 Webhook Endpoints (`port 8080`)
 
 Once running, PixelGrid exposes an interactive web server on port `8080`:
@@ -122,6 +153,25 @@ Once running, PixelGrid exposes an interactive web server on port `8080`:
   ```
 * **Health Check (`GET /health`):**
   Returns `200 OK` for container health monitoring.
+
+---
+
+## ⏱️ Periodic Background Scheduler (`LOOP_INTERVAL_MINUTES`)
+
+In addition to the HTTP Webhook API, PixelGrid runs an autonomous asynchronous background scheduler loop inside `src/server.py`.
+
+### How It Works
+1. **Automated Cadence:** Controlled by the environment variable `LOOP_INTERVAL_MINUTES` (defaulting to `15` minutes in `docker-compose.yml`). Every 15 minutes, the scheduler automatically wakes up.
+2. **Theme Selection:** Selects a high-surprise video game archetype or retro prompt from `THEMES`.
+3. **Hardware Wake-Up & Render:** Automatically executes `ensure_bluetooth_ready` on your Raspberry Pi, warms up the Linux BlueZ cache, and transmits the new 16x16 pixel art to your speaker.
+4. **Archive Storage:** Every generated artwork JSON file is archived permanently in `/app/downloads/` (`./downloads/` on your host) with a timestamped filename (e.g., `super_mario_2026-07-08_08-30-00.json`).
+
+### Customizing the Cadence
+To change how often PixelGrid updates your speaker, edit `LOOP_INTERVAL_MINUTES` in your `docker-compose.yml` (or CasaOS environment settings):
+```yaml
+environment:
+  - LOOP_INTERVAL_MINUTES=30  # Update every 30 minutes (or set to 60 for hourly)
+```
 
 ---
 
