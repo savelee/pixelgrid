@@ -1,0 +1,43 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: '3.8'
+
+services:
+  pixelgrid:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pixelgrid-service
+    restart: unless-stopped
+    # Host networking & D-Bus mount are required for Linux BLE / BlueZ access on Raspberry Pi
+    network_mode: "host"
+    privileged: true
+    volumes:
+      - ./downloads:/app/downloads
+      - /var/run/dbus:/var/run/dbus
+      - /run/dbus:/run/dbus
+      - /sys/class/bluetooth:/sys/class/bluetooth
+    environment:
+      # Option 1: Use Google AI Studio free API Key (personal account)
+      # - GEMINI_API_KEY=AIzaSyYourApiKeyHere
+      # Option 2: Use Google Cloud Vertex AI (requires ADC credentials)
+      - GCP_PROJECT_ID=leeboonstra
+      - GEMINI_LOCATION=global
+      - GEMINI_MODEL=gemini-3.5-flash
+      - PYTHONPATH=/app
+      - PORT=8080
+      - LOOP_INTERVAL_MINUTES=15
+      # Set your Divoom speaker MAC address or UUID:
+      # - DIVOOM_MAC_ADDRESS=6B3A1398-627A-47C9-FFCD-1A81B7769567

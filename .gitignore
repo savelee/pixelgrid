@@ -1,0 +1,26 @@
+# Python & Virtual Environments
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environment Variables & Secrets
+.env
+.env.*
+
+# Generated Artwork Downloads & Logs
+downloads/
+*.log
+
+# OS & Editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Build & Packaging Metadata
+*.egg-info/
+.eggs/
+dist/
+build/
