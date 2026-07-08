@@ -1,19 +1,3 @@
-<!--
- Copyright 2026 Google LLC
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
--->
-
 # PixelGrid: Autonomous AI Pixel Art Service for Divoom Timebox Evo
 
 PixelGrid is an autonomous containerized service designed to run 24/7 on a **Raspberry Pi (CasaOS / Linux)**. Every 15 minutes, it uses Google AI Studio or Google Cloud Vertex AI Gemini models (`gemini-2.5-flash` / `gemini-3.5-flash`) to generate unique 16x16 video game pixel art arrays and renders them directly onto a physical **Divoom Timebox Evo** LED speaker over Bluetooth Low Energy (BLE).
@@ -30,6 +14,39 @@ PixelGrid is an autonomous containerized service designed to run 24/7 on a **Ras
   - **5-Attempt Exponential Backoff:** Resilient retry loop automatically recovers from transient RF drops or busy controller locks.
 - **Webhook API (`port 8080`):** Includes a built-in asynchronous HTTP server offering instant on-demand generation (`/refresh`), real-time status diagnostics (`/status`), and health probes (`/health`).
 - **Archive History:** Automatically stores every generated 16x16 JSON array in `./downloads/` with timestamped filenames.
+
+---
+
+## 🎨 How the Prompt & Matrix Generation Works (`src/script.py`)
+
+PixelGrid generates physical LED artwork without using heavy image generation models by prompting Gemini (`gemini-2.5-flash` / `gemini-3.5-flash`) to produce structured numerical JSON matrices.
+
+### 1. Randomized Theme Pool (`THEMES` around line 47)
+In `src/script.py` (around **line 47**), we define a broad catalog of high-surprise video game archetypes and cozy retro prompts:
+```python
+THEMES = [
+    "A classic Super Mario character or enemy in a dynamic pose",
+    "An iconic Pac-Man ghost sprite with expressive pixel eyes in any canonical color",
+    "A Legend of Zelda character, enemy, or magical artifact",
+    ...
+]
+```
+Every 15 minutes, `random.choice(THEMES)` randomly selects one prompt to ensure high artistic diversity.
+
+### 2. Direct RGB Matrix Prompting (around line 210)
+In `generate_pixel_art()` (around **line 210**), instead of asking for a PNG or binary image file, we instruct Gemini to output a structured **16x16 2D array of RGB color triples (`[[[r,g,b], ...], ...]`)** using strict JSON schema mode (`response_mime_type="application/json"`):
+
+```python
+    prompt = f"""
+You are a master retro video game pixel artist designing vibrant 16x16 LED canvas icons.
+Generate a unique, creative 16x16 pixel art image array representing: "{theme}".
+
+Output MUST be a valid JSON 2D array containing exactly 16 sub-arrays, each containing exactly 16 RGB lists, structured precisely like this:
+[[[r,g,b], [r,g,b], ...], ...]
+"""
+```
+
+Each numerical `[r, g, b]` triple (e.g. `[255, 0, 128]`) maps directly 1-to-1 to one of the 256 physical LEDs on the Divoom Timebox Evo grid!
 
 ---
 
