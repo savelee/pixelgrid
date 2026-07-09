@@ -32,12 +32,6 @@ services:
     env_file:
       - .env
     environment:
-      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-leeboonstra}
-      - GEMINI_LOCATION=${GEMINI_LOCATION:-global}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.5-flash}
       - PYTHONPATH=/app
       - PORT=8080
-      - LOOP_INTERVAL_MINUTES=10
-      - GRID_SIZE=8
-      - DIVOOM_MAC_ADDRESS=${DIVOOM_MAC_ADDRESS}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
