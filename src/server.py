@@ -168,7 +168,7 @@ def main() -> None:
 
     project_id = os.environ.get("GCP_PROJECT_ID", "leeboonstra")
     location = os.environ.get("GEMINI_LOCATION", "global")
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     mac_address = os.environ.get("DIVOOM_MAC_ADDRESS")
 
     server = PixelGridServer(

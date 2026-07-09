@@ -238,19 +238,19 @@ def save_pixel_matrix(
 
 def generate_pixel_art(
     theme: str,
-    project_id: str,
+    project_id: str = "",
     location: str = "global",
-    model_name: str = "gemini-3.5-flash",
+    model_name: str = "gemini-2.5-flash",
     client: genai.Client | None = None,
     grid_size: int = 8,
 ) -> list[list[list[int]]]:
-    """Generates a pixel matrix from Vertex AI Gemini and upscales to 16x16.
+    """Generates a pixel matrix from Google AI Studio Gemini and upscales to 16x16.
 
     Args:
         theme: The subject theme for the artwork.
-        project_id: GCP project ID for Vertex AI.
-        location: Vertex AI endpoint location (defaults to 'global').
-        model_name: Model identifier.
+        project_id: Ignored (retained for signature compatibility).
+        location: Ignored (retained for signature compatibility).
+        model_name: Model identifier (defaults to 'gemini-2.5-flash').
         client: Optional pre-configured genai.Client dependency injection.
         grid_size: Base generation grid dimension (default 8 for 8-bit art).
 
@@ -258,20 +258,17 @@ def generate_pixel_art(
         list[list[list[int]]]: Validated and centered 16x16 pixel matrix.
 
     Raises:
-        ValueError: If model output does not conform to the schema.
+        ValueError: If model output does not conform to the schema or GEMINI_API_KEY is missing.
     """
     if client is None:
         api_key = os.environ.get("GEMINI_API_KEY")
-        if api_key:
-            logger.info("Authenticating via Google AI Studio API key.")
-            client = genai.Client(api_key=api_key)
-        else:
-            logger.info("Authenticating via Google Cloud Vertex AI ADC.")
-            client = genai.Client(
-                vertexai=True,
-                project=project_id,
-                location=location,
+        if not api_key:
+            raise ValueError(
+                "GEMINI_API_KEY environment variable is missing. Please set GEMINI_API_KEY in .env to use Google AI Studio (Free Tier)."
             )
+        logger.info("Authenticating via Google AI Studio API key (Free Tier).")
+        client = genai.Client(api_key=api_key)
+
 
     prompt = f"""
 You are a master retro video game pixel artist designing authentic {grid_size}x{grid_size} 8-bit sprites.
@@ -472,9 +469,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    project_id = os.environ.get("GCP_PROJECT_ID", "leeboonstra")
+    project_id = os.environ.get("GCP_PROJECT_ID")
     location = os.environ.get("GEMINI_LOCATION", "global")
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     mac_address = os.environ.get("DIVOOM_MAC_ADDRESS")
 
     run_kwargs = {
