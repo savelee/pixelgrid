@@ -313,8 +313,8 @@ ARTISTIC RULES FOR {grid_size}x{grid_size} 8-BIT SPRITES:
     return centered_matrix
 
 
-def ensure_bluetooth_ready() -> None:
-    """Ensures Linux Bluetooth controller hci0 is unblocked and powered up."""
+def ensure_bluetooth_ready(mac_address: str | None = None) -> None:
+    """Ensures Linux Bluetooth controller hci0 is unblocked and stale connections are cleared."""
     if sys.platform.startswith("linux"):
         logger.info("Waking up Linux Bluetooth adapter hci0...")
         try:
@@ -328,6 +328,12 @@ def ensure_bluetooth_ready() -> None:
                 check=False,
                 capture_output=True,
             )
+            if mac_address:
+                subprocess.run(
+                    ["bluetoothctl", "disconnect", mac_address],
+                    check=False,
+                    capture_output=True,
+                )
         except Exception as err:
             logger.debug("Bluetooth hardware wakeup note: %s", err)
 
@@ -353,7 +359,7 @@ async def push_to_divoom(
         logger.error("divoom-protocol package is not installed.")
         return False
 
-    ensure_bluetooth_ready()
+    ensure_bluetooth_ready(mac_address=mac_address)
 
     target_address = mac_address
     if not target_address:
