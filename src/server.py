@@ -47,20 +47,22 @@ class PixelGridServer:
         self.grid_size = grid_size
         self.last_result: dict[str, Any] | None = None
         self._background_task: asyncio.Task[None] | None = None
+        self._gen_lock = asyncio.Lock()
 
     async def trigger_generation(self) -> dict[str, Any]:
         """Executes a generation pass and records the result."""
-        logger.info("Executing artwork generation pass...")
-        result = await run_once(
-            project_id=self.project_id,
-            location=self.location,
-            model_name=self.model_name,
-            download_dir=self.download_dir,
-            mac_address=self.mac_address,
-            grid_size=self.grid_size,
-        )
-        self.last_result = result
-        return result
+        async with self._gen_lock:
+            logger.info("Executing artwork generation pass...")
+            result = await run_once(
+                project_id=self.project_id,
+                location=self.location,
+                model_name=self.model_name,
+                download_dir=self.download_dir,
+                mac_address=self.mac_address,
+                grid_size=self.grid_size,
+            )
+            self.last_result = result
+            return result
 
     async def _periodic_worker(self) -> None:
         """Background worker executing generation on interval."""
@@ -97,6 +99,14 @@ class PixelGridServer:
 
     async def handle_refresh(self, request: web.Request) -> web.Response:
         """GET/POST /refresh - Triggers immediate artwork generation."""
+        if self._gen_lock.locked():
+            return web.json_response(
+                {
+                    "status": "busy",
+                    "message": "Artwork generation already in progress.",
+                },
+                status=409,
+            )
         try:
             result = await self.trigger_generation()
             return web.json_response(
@@ -112,8 +122,8 @@ class PixelGridServer:
             )
 
     async def on_startup(self, app: web.Application) -> None:
-        """Runs initial generation pass and starts background schedule."""
-        await self.trigger_generation()
+        """Starts background generation without blocking HTTP server binding."""
+        asyncio.create_task(self.trigger_generation())
         self._background_task = asyncio.create_task(self._periodic_worker())
 
     async def on_cleanup(self, app: web.Application) -> None:
@@ -144,7 +154,7 @@ def main() -> None:
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.environ.get("PORT", 8080)),
+        default=int(os.environ.get("PORT", 8088)),
         help="HTTP server listening port.",
     )
     parser.add_argument(

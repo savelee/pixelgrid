@@ -278,10 +278,11 @@ Output MUST be a valid JSON 2D array containing exactly {grid_size} sub-arrays, 
 [[[r,g,b], [r,g,b], ...], ...]
 
 ARTISTIC RULES FOR {grid_size}x{grid_size} 8-BIT SPRITES:
-1. ALWAYS CENTERED: The subject must be centered in the middle of the {grid_size}x{grid_size} grid with at least a 1-pixel border of background color around all edges.
-2. SOLID BACKGROUND: Use a clean, contrasting background color behind the sprite. Never leave empty black unless black is a deliberate artistic background.
-3. ICONIC 8-BIT FIDELITY: Use bold, highly saturated retro RGB colors. Keep pixel clusters distinct so canonical features remain readable at {grid_size}x{grid_size} resolution.
-4. STRICT THEME FIDELITY: Strictly depict the exact subject requested in "{theme}". Do not substitute with a different character or item.
+1. MAXIMAL CANVAS COVERAGE (NO MINI ICONS): The sprite subject MUST be large, prominent, and fill most of the {grid_size}x{grid_size} canvas (occupying roughly 6x6 or 7x7 active foreground pixels). Do NOT generate tiny or shrunken mini-icons surrounded by empty background.
+2. ALWAYS CENTERED: Center the large subject in the middle of the {grid_size}x{grid_size} grid with a clean 1-pixel background border around the edges.
+3. SOLID BACKGROUND: Use a clean, contrasting background color behind the sprite. Never leave empty black unless black is a deliberate artistic background.
+4. ICONIC 8-BIT FIDELITY: Use bold, highly saturated retro RGB colors. Keep pixel clusters bold and readable at {grid_size}x{grid_size} resolution.
+5. STRICT THEME FIDELITY: Strictly depict the exact subject requested in "{theme}". Do not substitute with a different character or item.
 """
 
     config = types.GenerateContentConfig(
