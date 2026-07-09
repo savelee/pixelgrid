@@ -29,15 +29,15 @@ services:
       - /var/run/dbus:/var/run/dbus
       - /run/dbus:/run/dbus
       - /sys/class/bluetooth:/sys/class/bluetooth
+    env_file:
+      - .env
     environment:
-      # Option 1: Use Google AI Studio free API Key (personal account)
-      # - GEMINI_API_KEY=AIzaSyYourApiKeyHere
-      # Option 2: Use Google Cloud Vertex AI (requires ADC credentials)
-      - GCP_PROJECT_ID=leeboonstra
-      - GEMINI_LOCATION=global
-      - GEMINI_MODEL=gemini-3.5-flash
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-leeboonstra}
+      - GEMINI_LOCATION=${GEMINI_LOCATION:-global}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.5-flash}
       - PYTHONPATH=/app
       - PORT=8080
-      - LOOP_INTERVAL_MINUTES=15
-      # Set your Divoom speaker MAC address or UUID:
-      # - DIVOOM_MAC_ADDRESS=6B3A1398-627A-47C9-FFCD-1A81B7769567
+      - LOOP_INTERVAL_MINUTES=10
+      - GRID_SIZE=8
+      - DIVOOM_MAC_ADDRESS=${DIVOOM_MAC_ADDRESS}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}

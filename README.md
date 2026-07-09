@@ -1,19 +1,22 @@
 # PixelGrid: Autonomous AI Pixel Art Service for Divoom Timebox Evo
 
-PixelGrid is an autonomous containerized service designed to run 24/7 on a **Raspberry Pi (CasaOS / Linux)**. Every 15 minutes, it uses Google AI Studio or Google Cloud Vertex AI Gemini models (`gemini-2.5-flash` / `gemini-3.5-flash`) to generate unique 16x16 video game pixel art arrays and renders them directly onto a physical **Divoom Timebox Evo** LED speaker over Bluetooth Low Energy (BLE).
+PixelGrid is an autonomous containerized service designed to run 24/7 on a **Raspberry Pi (CasaOS / Linux)**. Every 10 minutes, it uses Google AI Studio or Google Cloud Vertex AI Gemini models (`gemini-2.5-flash` / `gemini-3.5-flash`) to generate authentic **8x8 retro 8-bit video game sprites**, automatically centers and upscales them 2x into 16x16 pixel art arrays, and renders them directly onto a physical **Divoom Timebox Evo** LED speaker over Bluetooth Low Energy (BLE).
 
 ---
 
 ## ✨ Key Features
 
-- **High-Surprise Retro Gaming Engine:** Uses evocative, archetypical themes (Super Mario, Zelda, Pac-Man, Castlevania, retro arcade spaceships, cozy campfire scenes) with strict 16x16 artistic rules (centered composition, contrasting filled backgrounds, 16-bit color shading).
+- **8-Bit Retro Sprite Engine:** Generates clean 8x8 RGB sprites (`grid_size=8`) from curated classic arcade, NES, and 8-bit console themes.
+- **Automatic Matrix Centering & Upscaling:**
+  - **Auto-Centering (`center_pixel_matrix`):** Automatically calculates the foreground sprite bounding box against the background color and centers the sprite on the canvas.
+  - **2x Programmatic Upscaling (`upscale_matrix`):** Expands each 8x8 pixel into a 2x2 LED block on the 16x16 Divoom display for authentic retro chunky aesthetics.
 - **Dual Authentication:** Supports completely free **Google AI Studio API Keys (`GEMINI_API_KEY`)** alongside enterprise Google Cloud Vertex AI Application Default Credentials (ADC).
 - **Self-Healing Linux BLE Pipeline:**
   - **Automated Hardware Wakeup (`ensure_bluetooth_ready`):** Automatically executes `rfkill unblock bluetooth` and `hciconfig hci0 up` inside the privileged container before every transmission to prevent adapter sleep states.
   - **BlueZ Discovery Warmup:** Actively scans airwaves for 10 seconds (`BleakScanner.find_device_by_address`) to warm up Linux BlueZ's kernel cache before connecting.
   - **5-Attempt Exponential Backoff:** Resilient retry loop automatically recovers from transient RF drops or busy controller locks.
 - **Webhook API (`port 8080`):** Includes a built-in asynchronous HTTP server offering instant on-demand generation (`/refresh`), real-time status diagnostics (`/status`), and health probes (`/health`).
-- **Archive History:** Automatically stores every generated 16x16 JSON array in `./downloads/` with timestamped filenames.
+- **Archive History:** Automatically stores every generated JSON array in `./downloads/` with timestamped filenames.
 
 ---
 
@@ -21,32 +24,32 @@ PixelGrid is an autonomous containerized service designed to run 24/7 on a **Ras
 
 PixelGrid generates physical LED artwork without using heavy image generation models by prompting Gemini (`gemini-2.5-flash` / `gemini-3.5-flash`) to produce structured numerical JSON matrices.
 
-### 1. Randomized Theme Pool (`THEMES` around line 47)
-In `src/script.py` (around **line 47**), we define a broad catalog of high-surprise video game archetypes and cozy retro prompts:
+### 1. Curated 8-Bit Theme Pool (`THEMES` around line 34)
+In `src/script.py` (around **line 34**), we define a catalog of specific 8-bit arcade, NES, and Game Boy sprite subjects:
 ```python
 THEMES = [
-    "A classic Super Mario character or enemy in a dynamic pose",
-    "An iconic Pac-Man ghost sprite with expressive pixel eyes in any canonical color",
-    "A Legend of Zelda character, enemy, or magical artifact",
+    "A classic Space Invaders alien crab sprite in bright neon green",
+    "Blinky the red Pac-Man ghost with blue eyes on a dark blue background",
+    "An 8-bit Princess Peach sprite with golden crown and pink dress",
     ...
 ]
 ```
-Every 15 minutes, `random.choice(THEMES)` randomly selects one prompt to ensure high artistic diversity.
+Every 10 minutes, `random.choice(THEMES)` randomly selects one prompt to ensure balanced character representation.
 
-### 2. Direct RGB Matrix Prompting (around line 210)
-In `generate_pixel_art()` (around **line 210**), instead of asking for a PNG or binary image file, we instruct Gemini to output a structured **16x16 2D array of RGB color triples (`[[[r,g,b], ...], ...]`)** using strict JSON schema mode (`response_mime_type="application/json"`):
+### 2. Direct 8x8 RGB Matrix Prompting & Auto-Centering (around line 150)
+In `generate_pixel_art()`, we instruct Gemini to output a structured **8x8 2D array of RGB color triples (`[[[r,g,b], ...], ...]`)** using strict JSON schema mode (`response_mime_type="application/json"`):
 
 ```python
     prompt = f"""
-You are a master retro video game pixel artist designing vibrant 16x16 LED canvas icons.
-Generate a unique, creative 16x16 pixel art image array representing: "{theme}".
+You are a master retro video game pixel artist designing authentic {grid_size}x{grid_size} 8-bit sprites.
+Generate an iconic {grid_size}x{grid_size} pixel art image array representing: "{theme}".
 
-Output MUST be a valid JSON 2D array containing exactly 16 sub-arrays, each containing exactly 16 RGB lists, structured precisely like this:
+Output MUST be a valid JSON 2D array containing exactly {grid_size} sub-arrays, each containing exactly {grid_size} RGB lists, structured precisely like this:
 [[[r,g,b], [r,g,b], ...], ...]
 """
 ```
 
-Each numerical `[r, g, b]` triple (e.g. `[255, 0, 128]`) maps directly 1-to-1 to one of the 256 physical LEDs on the Divoom Timebox Evo grid!
+Each 8x8 matrix is centered using `center_pixel_matrix()` and upscaled 2x via `upscale_matrix()` so every single 8-bit pixel becomes a crisp 2x2 LED block on the 16x16 Divoom Timebox Evo grid!
 
 ---
 

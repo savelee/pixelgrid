@@ -1,17 +1,3 @@
-# Copyright 2026 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """16x16 Pixel Art Generator & Divoom Timebox Evo BLE Transmitter.
 
 Generates dynamic 16x16 RGB pixel matrices using Google Cloud Vertex AI Gemini
@@ -46,64 +32,61 @@ logging.basicConfig(
 logger = logging.getLogger("pixelgrid")
 
 THEMES = [
-    # --- SERIES ARCHETYPES (HIGH SURPRISE VALUE) ---
-    "A classic Super Mario character or enemy in a dynamic pose",
-    "An iconic Pac-Man ghost sprite with expressive pixel eyes in any canonical color",
-    "A Legend of Zelda character, enemy, or magical artifact",
-    "An iconic Sega character from the Sonic the Hedgehog universe",
-    "A classic Capcom or SNK arcade character in an action stance",
-    "An iconic 8-bit retro video game boss monster",
-    "A retro fighting game character executing a signature special move",
-    "A classic RPG character class (wizard, knight, rogue) casting a spell",
-    "A cute retro pixel mascot from an 8-bit or 16-bit console era",
+    # --- CLASSIC ARCADE 8-BIT SPRITES ---
+    "A classic Space Invaders alien crab sprite in bright neon green",
+    "Blinky the red Pac-Man ghost with blue eyes on a dark blue background",
+    "A Galaga fighter spaceship firing double red lasers upward",
+    "Dig Dug character with white helmet and blue suit holding a pump",
+    "A classic arcade Pong paddle hitting a square pixel ball",
+    "Q*bert orange character standing on an isometric cube tile",
+    "Frogger green pixel frog crossing on a dark blue water background",
+    "Bubble Bobble green dragon sprite blowing a blue bubble",
 
-    # --- CHARACTERS WITH CREATIVE FREEDOM ---
-    "Super Mario or Luigi in an action jumping or power-up pose",
-    "A classic Mario enemy (Goomba, Koopa Troopa, Boo, or Piranha Plant)",
-    "Link from The Legend of Zelda holding a signature item or weapon",
-    "Sonic the Hedgehog or Tails in a fast running or flying pose",
-    "Mega Man or one of the classic Robot Masters aiming an arm cannon",
-    "Kirby inhaling or wearing a fun copy ability hat",
-    "Samus Aran in her Power Suit or a floating Metroid alien creature",
-    "Pac-Man navigating a maze with dots or fruit",
-    "Simon Belmont or a classic gothic Castlevania monster",
-    "Bomberman holding a bomb with a sparking fuse",
+    # --- 8-BIT NES & RETRO CONSOLE SPRITES ---
+    "An 8-bit Princess Peach sprite with golden crown and pink dress",
+    "Mega Man classic blue 8-bit helmet profile on a dark background",
+    "An 8-bit Super Mario Super Mushroom (red cap with white spots)",
+    "An 8-bit Super Mario jumping sprite in red cap and blue overalls",
+    "An 8-bit Bowser green shell with spikes on a dark background",
+    "An 8-bit Legend of Zelda golden Triforce glowing on dark royal blue",
+    "An 8-bit Link holding a wooden shield and sword",
+    "An 8-bit Samus Aran Power Suit orange helmet profile",
+    "An 8-bit Goomba walking sprite with brown mushroom cap and white feet",
+    "An 8-bit Piranha Plant emerging from a green warp pipe",
+    "An 8-bit Boo white ghost with glowing eyes and tongue out",
+    "An 8-bit Metroid floating alien larva with green nuclei",
+    "An 8-bit Bomberman character with white helmet and pink hands",
+    "An 8-bit Donkey Kong brown wooden barrel with white bands",
+    "An 8-bit Duck Hunt laughing dog headshot on grass green background",
+    "An 8-bit Excitebike red motocross rider jumping on dirt track",
+    "An 8-bit Castlevania holy water blue bottle with flame spark",
 
-    # --- SURPRISE ITEMS, WEAPONS & TREASURES ---
-    "A magical fantasy RPG potion bottle with vibrant sparkling liquid",
-    "An iconic power-up mushroom, star, or flower from a retro platformer",
-    "A glowing legendary sword or shield from a retro adventure game",
-    "A retro treasure chest bursting with glowing gems or gold coins",
-    "An iconic pixelated heart container or extra-life symbol",
-    "A retro gaming console controller, cartridge, or handheld device",
-
-    # --- VEHICLES, MECHS & SPACESHIPS ---
-    "A classic retro arcade shoot-'em-up spaceship firing glowing lasers",
-    "An alien invader UFO or boss ship from a classic arcade game",
-    "A pixelated racing vehicle drifting around a track corner",
-    "A retro futuristic mech or combat robot in an 8-bit style",
-
-    # --- ATMOSPHERIC & COZY GAMING SCENES ---
-    "A cozy pixelated hearth campfire or glowing fireplace at night",
-    "A glowing arcade cabinet in a dark neon-lit game room",
-    "A mystical glowing save-point crystal floating above a stone altar",
+    # --- RETRO GAMING ICONS & ARTIFACTS ---
+    "An 8-bit red and white Poke Ball icon on a dark background",
+    "A classic Tetris purple T-block tetromino sprite",
+    "An 8-bit Dragon Quest blue Slime monster smiling",
+    "An 8-bit Kirby pink round sprite with rosy cheeks",
+    "An 8-bit green 1-Up extra life mushroom icon",
+    "An 8-bit pixel heart container filled with bright red health",
 ]
 
 
-def validate_pixel_matrix(matrix: Any) -> bool:
-    """Validates that a JSON payload is a well-formed 16x16 RGB pixel grid.
+
+def validate_pixel_matrix(matrix: Any, expected_size: int = 8) -> bool:
+    """Validates that a JSON payload is a well-formed square RGB pixel grid.
 
     Args:
         matrix: The object to validate.
+        expected_size: Expected grid width and height (default 8).
 
     Returns:
-        bool: True if the structure is exactly 16x16 RGB values (0-255).
+        bool: True if the structure is expected_size x expected_size RGB values (0-255).
     """
-    if not isinstance(matrix, list) or len(matrix) != 16:
+    if not isinstance(matrix, list) or len(matrix) != expected_size:
         return False
 
     for row in matrix:
-        if not isinstance(row, list) or len(row) != 16:
+        if not isinstance(row, list) or len(row) != expected_size:
             return False
         for pixel in row:
             if not isinstance(pixel, list) or len(pixel) != 3:
@@ -113,6 +96,97 @@ def validate_pixel_matrix(matrix: Any) -> bool:
             ):
                 return False
     return True
+
+
+def upscale_matrix(
+    matrix: list[list[list[int]]], scale: int = 2
+) -> list[list[list[int]]]:
+    """Upscales a pixel matrix by repeating each pixel scale x scale times.
+
+    Args:
+        matrix: Input 2D RGB pixel list (e.g., 8x8).
+        scale: Multiplier factor (default 2 for 8x8 -> 16x16).
+
+    Returns:
+        list[list[list[int]]]: Upscaled pixel matrix.
+    """
+    upscaled: list[list[list[int]]] = []
+    for row in matrix:
+        scaled_row: list[list[int]] = []
+        for pixel in row:
+            scaled_row.extend([pixel] * scale)
+        for _ in range(scale):
+            upscaled.append(list(scaled_row))
+    return upscaled
+
+
+def detect_background_color(matrix: list[list[list[int]]]) -> list[int]:
+    """Detects the background RGB color by finding the mode of border pixels.
+
+    Args:
+        matrix: 2D list of RGB pixels.
+
+    Returns:
+        list[int]: The RGB color list representing the background.
+    """
+    size = len(matrix)
+    border_pixels: list[tuple[int, int, int]] = []
+    for r in range(size):
+        for c in range(size):
+            if r in (0, size - 1) or c in (0, size - 1):
+                border_pixels.append((matrix[r][c][0], matrix[r][c][1], matrix[r][c][2]))
+
+    counts: dict[tuple[int, int, int], int] = {}
+    for p in border_pixels:
+        counts[p] = counts.get(p, 0) + 1
+
+    best_color = max(counts.items(), key=lambda item: item[1])[0]
+    return list(best_color)
+
+
+
+def center_pixel_matrix(
+    matrix: list[list[list[int]]],
+) -> list[list[list[int]]]:
+    """Centers the foreground bounding box within the square matrix canvas.
+
+    Args:
+        matrix: Validated square 2D RGB pixel matrix.
+
+    Returns:
+        list[list[list[int]]]: Centered pixel matrix with preserved background.
+    """
+    size = len(matrix)
+    bg = detect_background_color(matrix)
+
+    foreground_coords = [
+        (r, c)
+        for r in range(size)
+        for c in range(size)
+        if matrix[r][c] != bg
+    ]
+    if not foreground_coords:
+        return matrix
+
+    min_r = min(r for r, _ in foreground_coords)
+    max_r = max(r for r, _ in foreground_coords)
+    min_c = min(c for _, c in foreground_coords)
+    max_c = max(c for _, c in foreground_coords)
+
+    height = max_r - min_r + 1
+    width = max_c - min_c + 1
+
+    target_r = (size - height) // 2
+    target_c = (size - width) // 2
+
+    centered = [[bg for _ in range(size)] for _ in range(size)]
+    for r in range(min_r, max_r + 1):
+        for c in range(min_c, max_c + 1):
+            new_r = target_r + (r - min_r)
+            new_c = target_c + (c - min_c)
+            if 0 <= new_r < size and 0 <= new_c < size:
+                centered[new_r][new_c] = matrix[r][c]
+    return centered
 
 
 def flatten_matrix_to_tuples(
@@ -168,8 +242,9 @@ def generate_pixel_art(
     location: str = "global",
     model_name: str = "gemini-3.5-flash",
     client: genai.Client | None = None,
+    grid_size: int = 8,
 ) -> list[list[list[int]]]:
-    """Generates a 16x16 pixel matrix from Vertex AI Gemini.
+    """Generates a pixel matrix from Vertex AI Gemini and upscales to 16x16.
 
     Args:
         theme: The subject theme for the artwork.
@@ -177,12 +252,13 @@ def generate_pixel_art(
         location: Vertex AI endpoint location (defaults to 'global').
         model_name: Model identifier.
         client: Optional pre-configured genai.Client dependency injection.
+        grid_size: Base generation grid dimension (default 8 for 8-bit art).
 
     Returns:
-        list[list[list[int]]]: Validated 16x16 pixel matrix.
+        list[list[list[int]]]: Validated and centered 16x16 pixel matrix.
 
     Raises:
-        ValueError: If model output does not conform to the 16x16 schema.
+        ValueError: If model output does not conform to the schema.
     """
     if client is None:
         api_key = os.environ.get("GEMINI_API_KEY")
@@ -198,18 +274,17 @@ def generate_pixel_art(
             )
 
     prompt = f"""
-You are a master retro video game pixel artist designing vibrant 16x16 LED canvas icons.
-Generate a unique, creative 16x16 pixel art image array representing: "{theme}".
+You are a master retro video game pixel artist designing authentic {grid_size}x{grid_size} 8-bit sprites.
+Generate an iconic {grid_size}x{grid_size} pixel art image array representing: "{theme}".
 
-Output MUST be a valid JSON 2D array containing exactly 16 sub-arrays, each containing exactly 16 RGB lists, structured precisely like this:
+Output MUST be a valid JSON 2D array containing exactly {grid_size} sub-arrays, each containing exactly {grid_size} RGB lists, structured precisely like this:
 [[[r,g,b], [r,g,b], ...], ...]
 
-ARTISTIC RULES FOR 16x16 LED DISPLAYS:
-1. ALWAYS CENTERED: The subject must always be perfectly centered inside the 16x16 grid with balanced margins.
-2. ALWAYS HAVE A BACKGROUND: Every image must include a distinct, contrasting background color or atmospheric pattern behind the centered subject (never leave empty black unless black is a deliberate artistic background).
-3. COMPOSITION (8-BIT SCALE): Focus on an expressive close-up chibi headshot, bust, or iconic item so signature features remain crisp and legible at 16x16 resolution.
-4. COLOR & SHADING (16-BIT DEPTH): Use rich, highly saturated RGB colors with subtle highlights and anti-aliased shading so LEDs glow vibrantly.
-5. ICONIC FIDELITY: Strictly preserve canonical character colors.
+ARTISTIC RULES FOR {grid_size}x{grid_size} 8-BIT SPRITES:
+1. ALWAYS CENTERED: The subject must be centered in the middle of the {grid_size}x{grid_size} grid with at least a 1-pixel border of background color around all edges.
+2. SOLID BACKGROUND: Use a clean, contrasting background color behind the sprite. Never leave empty black unless black is a deliberate artistic background.
+3. ICONIC 8-BIT FIDELITY: Use bold, highly saturated retro RGB colors. Keep pixel clusters distinct so canonical features remain readable at {grid_size}x{grid_size} resolution.
+4. STRICT THEME FIDELITY: Strictly depict the exact subject requested in "{theme}". Do not substitute with a different character or item.
 """
 
     config = types.GenerateContentConfig(
@@ -229,12 +304,15 @@ ARTISTIC RULES FOR 16x16 LED DISPLAYS:
         raise ValueError("Empty response returned from Gemini.")
 
     matrix = json.loads(response.text)
-    if not validate_pixel_matrix(matrix):
+    if not validate_pixel_matrix(matrix, expected_size=grid_size):
         raise ValueError(
-            "Generated JSON does not match required 16x16 RGB schema."
+            f"Generated JSON does not match required {grid_size}x{grid_size} RGB schema."
         )
 
-    return matrix
+    centered_matrix = center_pixel_matrix(matrix)
+    if grid_size == 8:
+        return upscale_matrix(centered_matrix, scale=2)
+    return centered_matrix
 
 
 def ensure_bluetooth_ready() -> None:
@@ -334,6 +412,7 @@ async def run_once(
     model_name: str,
     download_dir: str,
     mac_address: str | None,
+    grid_size: int = 8,
 ) -> dict[str, Any]:
     """Executes a single generation cycle: Gemini -> JSON -> BLE Display.
 
@@ -343,6 +422,7 @@ async def run_once(
         model_name: Gemini model ID.
         download_dir: Target directory for archived JSON grids.
         mac_address: Optional Bluetooth MAC address.
+        grid_size: Generation resolution size (default 8).
 
     Returns:
         dict[str, Any]: Summary result containing theme and output path.
@@ -353,6 +433,7 @@ async def run_once(
         project_id=project_id,
         location=location,
         model_name=model_name,
+        grid_size=grid_size,
     )
     saved_path = save_pixel_matrix(matrix, download_dir, theme)
 
@@ -383,6 +464,12 @@ def main() -> None:
         default=os.environ.get("DOWNLOAD_DIR", "/app/downloads"),
         help="Directory to archive JSON pixel files.",
     )
+    parser.add_argument(
+        "--grid-size",
+        type=int,
+        default=int(os.environ.get("GRID_SIZE", 8)),
+        help="Grid dimension size (default 8 for 8-bit sprites).",
+    )
     args = parser.parse_args()
 
     project_id = os.environ.get("GCP_PROJECT_ID", "leeboonstra")
@@ -396,6 +483,7 @@ def main() -> None:
         "model_name": model_name,
         "download_dir": args.download_dir,
         "mac_address": mac_address,
+        "grid_size": args.grid_size,
     }
 
     asyncio.run(run_once(**run_kwargs))

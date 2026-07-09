@@ -1,17 +1,3 @@
-# Copyright 2026 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """HTTP Webhook Server & Periodic Scheduler for PixelGrid.
 
 Runs an async web service on port 8080 allowing on-demand artwork generation
@@ -48,7 +34,8 @@ class PixelGridServer:
         model_name: str,
         download_dir: str,
         mac_address: str | None,
-        interval_minutes: int = 15,
+        interval_minutes: int = 10,
+        grid_size: int = 8,
     ) -> None:
         """Initializes server settings and runtime state."""
         self.project_id = project_id
@@ -57,6 +44,7 @@ class PixelGridServer:
         self.download_dir = download_dir
         self.mac_address = mac_address
         self.interval_minutes = interval_minutes
+        self.grid_size = grid_size
         self.last_result: dict[str, Any] | None = None
         self._background_task: asyncio.Task[None] | None = None
 
@@ -69,6 +57,7 @@ class PixelGridServer:
             model_name=self.model_name,
             download_dir=self.download_dir,
             mac_address=self.mac_address,
+            grid_size=self.grid_size,
         )
         self.last_result = result
         return result
@@ -161,13 +150,19 @@ def main() -> None:
     parser.add_argument(
         "--interval",
         type=int,
-        default=int(os.environ.get("LOOP_INTERVAL_MINUTES", 15)),
+        default=int(os.environ.get("LOOP_INTERVAL_MINUTES", 10)),
         help="Periodic generation interval in minutes.",
     )
     parser.add_argument(
         "--download-dir",
         default=os.environ.get("DOWNLOAD_DIR", "/app/downloads"),
         help="Archive directory for JSON files.",
+    )
+    parser.add_argument(
+        "--grid-size",
+        type=int,
+        default=int(os.environ.get("GRID_SIZE", 8)),
+        help="Grid dimension size (default 8).",
     )
     args = parser.parse_args()
 
@@ -183,6 +178,7 @@ def main() -> None:
         download_dir=args.download_dir,
         mac_address=mac_address,
         interval_minutes=args.interval,
+        grid_size=args.grid_size,
     )
     app = server.create_app()
     web.run_app(app, port=args.port)

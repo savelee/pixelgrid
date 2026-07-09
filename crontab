@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run pixel grid generation every 15 minutes
-*/15 * * * * cd /app && python src/script.py --once
+# Run pixel grid generation every 10 minutes
+*/10 * * * * cd /app && python src/script.py --once
