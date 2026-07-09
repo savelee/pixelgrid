@@ -33,5 +33,5 @@ services:
       - .env
     environment:
       - PYTHONPATH=/app
-      - PORT=8080
+      - PORT=8088
 
